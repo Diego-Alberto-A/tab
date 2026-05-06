@@ -29,7 +29,11 @@ defmodule Tablature do
     |> Enum.map(fn tuple ->
       tuple
       |> Tuple.to_list()
-      |> Enum.join(" ")
+
+      # unimos notas simultaneas con /
+      |> Enum.filter(fn x -> x != "" end)
+      |> Enum.join("/")
+      #|> Enum.join(" ")
     end)
 
     |> Enum.join(" ")
