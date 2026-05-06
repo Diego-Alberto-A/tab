@@ -6,40 +6,61 @@ defmodule Tablature do
 
     |> Enum.map(fn line ->
       # dividimos cada linea
-      [string, notes, _] = String.split(line, "|")
+      [string | parts] = String.split(line, "|")
 
-      # separamos las notas
-      String.graphemes(notes)
+      # quitamos compases vacios
+      parts = Enum.reject(parts, fn x -> x == "" end)
 
-      |> Enum.map(fn c ->
-        # checamos si es de 0-9
-        if c =~ ~r/\d/ do
-          # juntamos cuerda + nota
-          "#{string}#{c}"
+      # recorremos cada compas
+      Enum.map(parts, fn notes ->
+
+        # separamos las notas
+        String.graphemes(notes)
+
+        |> Enum.map(fn c ->
+          # checamos si es de 0-9
+          if c =~ ~r/\d/ do
+            # juntamos cuerda + nota
+            "#{string}#{c}"
+          else
+            # si no es numero, dejamos vacio
+            ""
+          end
+        end)
+      end)
+    end)
+
+    # acomodamos los compases
+    |> Enum.zip()
+
+    |> Enum.flat_map(fn measure ->
+      measure
+      |> Tuple.to_list()
+
+      # acomodamos las notas por columnas
+      |> Enum.zip()
+
+      |> Enum.map(fn tuple ->
+        tuple
+        |> Tuple.to_list()
+
+        # unimos notas simultaneas con /
+        |> Enum.filter(fn x -> x != "" end)
+        |> Enum.join("/")
+      end)
+
+      # detectamos silencios largos
+      |> Enum.chunk_by(fn x -> x == "" end)
+
+      |> Enum.flat_map(fn group ->
+        if hd(group) == "" and length(group) >= 3 do
+          ["_"]
         else
-          # si no es numero, dejamos vacio
-          ""
+          Enum.reject(group, fn x -> x == "" end)
         end
       end)
     end)
 
-    # acomodamos las notas por columnas
-    |> Enum.zip()
-
-    |> Enum.map(fn tuple ->
-      tuple
-      |> Tuple.to_list()
-
-      # unimos notas simultaneas con /
-      |> Enum.filter(fn x -> x != "" end)
-      |> Enum.join("/")
-      #|> Enum.join(" ")
-    end)
-
-    |> Enum.join(" ")
-
-    # quitamos espacios extra
-    |> String.split()
     |> Enum.join(" ")
   end
 end
